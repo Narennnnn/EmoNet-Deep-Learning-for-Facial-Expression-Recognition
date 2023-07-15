@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Real-time Facial Expression Recognition</title>
+    <style>
+        #video-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        #result-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Real-time Facial Expression Recognition</h1>
+    <div id="video-container">
+        <video id="video" width="640" height="480" autoplay></video>
+    </div>
+    <div id="result-container">
+        <img id="result-img" width="320" height="240">
+    </div>
+
+    <script>
+        // Get access to the webcam
+        const video = document.getElementById("video");
+
+        navigator.mediaDevices
+            .getUserMedia({ video: true })
+            .then((stream) => {
+                video.srcObject = stream;
+            })
+            .catch((error) => {
+                console.error("Error accessing webcam:", error);
+            });
+
+        // Send the current frame to the server for prediction
+        function sendImageToServer() {
+            // Capture the current frame from the video stream
+            const canvas = document.createElement("canvas");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const context = canvas.getContext("2d");
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const image_data = canvas.toDataURL("image/jpeg");
+
+            // Send the image data to the server
+            fetch("/predict", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ image_data }),
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    // Update the result image with the predicted emotion
+                    const imgElement = document.getElementById("result-img");
+                    imgElement.src = data.result;
+
+                    // Repeat the process for the next frame
+                    requestAnimationFrame(sendImageToServer);
+                });
+        }
+
+        // Start sending frames to the server for prediction
+        sendImageToServer();
+    </script>
+</body>
+
+</html>
