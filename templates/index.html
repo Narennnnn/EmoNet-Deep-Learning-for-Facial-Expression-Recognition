@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Emotion Detection</title>
+    <style>
+        /* Add CSS styles for positioning the detected emotion and message elements */
+        .emotion-container {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Add the video element to display the camera stream -->
+    <video id="video" autoplay style="width: 100%; max-width: 640px;"></video>
+
+    <!-- Detected emotion and message container -->
+    <div class="emotion-container">
+        <h1>Real-Time Emotion Detection</h1>
+        <p>Detected Emotion: <span id="emotion"></span></p>
+        <p id="message"></p>
+    </div>
+
+    <script>
+        // Constants for HTML elements
+        const emotionSpan = document.getElementById("emotion");
+        const messageParagraph = document.getElementById("message");
+        const videoElement = document.getElementById('video');
+
+        // WebSocket connection
+        const socket = new WebSocket("ws://" + window.location.hostname + ":" + window.location.port + "/ws");
+
+        // Handle WebSocket messages
+        socket.onmessage = function (event) {
+            const data = JSON.parse(event.data);
+            emotionSpan.textContent = data.emotion;
+
+            if (data.emotion === "happy") {
+                messageParagraph.textContent = "Keep smiling! You've got that infectious happiness!";
+            } else if (data.emotion === "sad") {
+                messageParagraph.textContent = "It's okay to feel down sometimes. Remember, brighter days are ahead!";
+            } else if (data.emotion === "fear") {
+                messageParagraph.textContent = "Fear not! Face your fears, and you'll conquer them!";
+            } else if (data.emotion === "angry") {
+                messageParagraph.textContent = "Stay calm and take a deep breath. Anger will pass.";
+            } else if (data.emotion === "disgust") {
+                messageParagraph.textContent = "Sometimes, things can be unpleasant. Stay strong and positive!";
+            } else if (data.emotion === "surprise") {
+                messageParagraph.textContent = "Wow, that was unexpected! Embrace life's surprises.";
+            } else if (data.emotion === "neutral") {
+                messageParagraph.textContent = "You have a mysterious aura. Keep an open mind!";
+            }
+        };
+
+        // Handle WebSocket connection errors
+        socket.onerror = function (event) {
+            console.error("WebSocket error:", event);
+            messageParagraph.textContent = "WebSocket connection error. Please reload the page.";
+        };
+
+        // Request camera access
+        async function getCameraAccess() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                videoElement.srcObject = stream;
+            } catch (error) {
+                console.error('Error accessing the camera:', error);
+                messageParagraph.textContent = "Error accessing the camera. Please grant camera access.";
+            }
+        }
+
+        // Call the function to request camera access when the page loads
+        window.onload = function () {
+            getCameraAccess();
+        };
+    </script>
+</body>
+
+</html>
